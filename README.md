@@ -19,18 +19,15 @@ import { background } from "elysia-background";
 
 const app = new Elysia()
   .use(background())
-  .post("/users", ({ backgroundTasks, body }) => {
-    // Add background tasks
-    backgroundTasks.addTask(async () => {
-      await sendWelcomeEmail(body.email);
-    });
+  .post("/sign-up", ({ backgroundTasks, body }) => {
+    // Do some processing
 
     backgroundTasks.addTask(async () => {
-      await logUserActivity(body.id);
+      await sendConfirmationEmail(body.email);
     });
 
     // Response sent immediately, tasks run in background
-    return { id: body.id, status: "created" };
+    return { message: "Registration successful!" };
   })
   .listen(3000);
 ```

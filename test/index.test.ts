@@ -197,7 +197,6 @@ describe('BackgroundTasks', () => {
   });
 
   it('should not block subsequent requests when error handler takes time', async () => {
-    const requestTimes: number[] = [];
     let asyncErrorHandlerStarted = false;
     let asyncErrorHandlerCompleted = false;
 
@@ -211,33 +210,63 @@ describe('BackgroundTasks', () => {
           },
         }),
       )
-      .get('/slow-error', ({ backgroundTasks }) => {
+      .get('/slow', ({ backgroundTasks }) => {
         backgroundTasks.addTask(async () => {
           throw new Error('Slow error handler test');
         });
-        return 'slow error task initiated';
+        return 'slow task initiated';
       })
-      .get('/fast', () => {
-        return 'fast response';
+      .get('/quick', () => {
+        return 'quick response';
       });
 
-    const startTime1 = Date.now();
-    await app.handle(get('/slow-error'));
-    requestTimes.push(Date.now() - startTime1);
-
-    await sleep(100);
-
+    const firstResponse = await app.handle(get('/slow'));
+    expect(await firstResponse.text()).toBe('slow task initiated');
+    await sleep(50);
     expect(asyncErrorHandlerStarted).toBe(true);
     expect(asyncErrorHandlerCompleted).toBe(false);
 
-    const startTime2 = Date.now();
-    await app.handle(get('/fast'));
-    const secondRequestTime = Date.now() - startTime2;
-    requestTimes.push(secondRequestTime);
+    // make sure second request completes quickly
+    const startTime = Date.now();
+    const secondResponse = await app.handle(get('/quick'));
+    const requestTime = Date.now() - startTime;
 
-    expect(secondRequestTime).toBeLessThan(1000);
+    expect(await secondResponse.text()).toBe('quick response');
+    expect(requestTime).toBeLessThan(100);
+    expect(asyncErrorHandlerCompleted).toBe(false);
+  });
 
-    const totalTime = requestTimes.reduce((sum, time) => sum + time, 0);
-    expect(totalTime).toBeLessThan(1000);
+  it('should not block subsequent requests when task takes time', async () => {
+    let longTaskStarted = false;
+    let longTaskCompleted = false;
+
+    const app = new Elysia()
+      .use(background())
+      .get('/slow', ({ backgroundTasks }) => {
+        backgroundTasks.addTask(async () => {
+          longTaskStarted = true;
+          await sleep(5000);
+          longTaskCompleted = true;
+        });
+        return 'slow task initiated';
+      })
+      .get('/quick', () => {
+        return 'quick response';
+      });
+
+    const firstResponse = await app.handle(get('/slow'));
+    expect(await firstResponse.text()).toBe('slow task initiated');
+    await sleep(50);
+    expect(longTaskStarted).toBe(true);
+    expect(longTaskCompleted).toBe(false);
+
+    // make sure second request completes quickly
+    const startTime = Date.now();
+    const secondResponse = await app.handle(get('/quick'));
+    const requestTime = Date.now() - startTime;
+
+    expect(await secondResponse.text()).toBe('quick response');
+    expect(requestTime).toBeLessThan(100);
+    expect(longTaskCompleted).toBe(false);
   });
 });

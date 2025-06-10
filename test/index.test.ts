@@ -7,57 +7,51 @@ import { get, sleep } from './utils';
 
 describe('BackgroundTasks', () => {
   it('should execute async task successfully', async () => {
-    let TASK_COMPLETE = false;
+    let taskComplete = false;
 
-    const async_task = async () => {
-      TASK_COMPLETE = true;
+    const asyncTask = async () => {
+      taskComplete = true;
     };
 
     const app = new Elysia()
       .use(background())
       .get('/', ({ backgroundTasks }) => {
-        backgroundTasks.addTask(async_task);
+        backgroundTasks.addTask(asyncTask);
         return 'task initiated';
       });
 
     const response = await app.handle(get('/'));
     expect(response.status).toBe(200);
-
-    const text = await response.text();
-
-    expect(text).toBe('task initiated');
-    expect(TASK_COMPLETE).toBe(true);
+    expect(await response.text()).toBe('task initiated');
+    expect(taskComplete).toBe(true);
   });
+
   // NOTE: currently, sync tasks are not supported
   // it('should execute sync task successfully', async () => {
-  //     let TASK_COMPLETE = false;
-
-  //     const sync_task = () => {
-  //         TASK_COMPLETE = true;
+  //     let taskComplete = false;
+  //
+  //     const syncTask = () => {
+  //         taskComplete = true;
   //     };
-
+  //
   //     const app = new Elysia()
-  //         .use(BackgroundTasksPlugin)
+  //         .use(background())
   //         .get('/', ({ backgroundTasks }) => {
-  //             backgroundTasks.addTask(sync_task);
+  //             backgroundTasks.addTask(syncTask);
   //             return 'task initiated';
   //         });
-
+  //
   //     const response = await app.handle(get('/'));
-
   //     expect(response.status).toBe(200);
-  //     const text = await response.text();
-
-  //     expect(text).toBe('task initiated');
-  //     expect(TASK_COMPLETE).toBe(true);
+  //     expect(await response.text()).toBe('task initiated');
+  //     expect(taskComplete).toBe(true);
   // });
 
-  it('should execute multiple tasks', async () => {
-    let TASK_COUNTER = 0;
+  it('should execute multiple tasks successfully', async () => {
+    let taskCounter = 0;
 
-    // NOTE: currently, sync tasks are not supported
     const increment = async (amount: number) => {
-      TASK_COUNTER += amount;
+      taskCounter += amount;
     };
 
     const app = new Elysia()
@@ -70,22 +64,19 @@ describe('BackgroundTasks', () => {
       });
 
     const response = await app.handle(get('/'));
-
     expect(response.status).toBe(200);
-    const text = await response.text();
-
-    expect(text).toBe('task initiated');
+    expect(await response.text()).toBe('task initiated');
 
     await sleep(100);
-
-    expect(TASK_COUNTER).toBe(1 + 2 + 3);
+    expect(taskCounter).toBe(1 + 2 + 3);
   });
+
   it('should stop execution when task fails', async () => {
-    let TASK_COUNTER = 0;
+    let taskCounter = 0;
 
     const increment = async () => {
-      TASK_COUNTER += 1;
-      if (TASK_COUNTER === 1) {
+      taskCounter += 1;
+      if (taskCounter === 1) {
         throw new Error('task failed');
       }
     };
@@ -93,8 +84,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          // just supress the error for testing
-          onError: () => {},
+          onError: () => {}, // suppress error for testing
         }),
       )
       .get('/', ({ backgroundTasks }) => {
@@ -104,18 +94,14 @@ describe('BackgroundTasks', () => {
       });
 
     const response = await app.handle(get('/'));
-
     expect(response.status).toBe(200);
-    const text = await response.text();
-
-    expect(text).toBe('task initiated');
+    expect(await response.text()).toBe('task initiated');
 
     await sleep(100);
-
-    expect(TASK_COUNTER).toBe(1);
+    expect(taskCounter).toBe(1);
   });
 
-  it('should support synchronous error handlers', async () => {
+  it('should handle synchronous error handlers', async () => {
     let capturedError: unknown;
 
     const app = new Elysia()
@@ -126,24 +112,25 @@ describe('BackgroundTasks', () => {
           },
         }),
       )
-      .get('/error', ({ backgroundTasks }) => {
+      .get('/', ({ backgroundTasks }) => {
         backgroundTasks.addTask(async () => {
           throw new Error('Test sync error');
         });
         return 'task initiated';
       });
 
-    await app.handle(get('/error'));
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('task initiated');
 
     await sleep(100);
-
     expect(capturedError).toBeInstanceOf(Error);
     expect((capturedError as Error).message).toBe('Test sync error');
   });
 
-  it('should support asynchronous error handlers without blocking', async () => {
+  it('should handle asynchronous error handlers', async () => {
     let capturedError: unknown;
-    let errorHandlerCompleted = false;
+    let errorHandlerComplete = false;
 
     const app = new Elysia()
       .use(
@@ -151,24 +138,25 @@ describe('BackgroundTasks', () => {
           onError: async (error) => {
             capturedError = error;
             await sleep(100);
-            errorHandlerCompleted = true;
+            errorHandlerComplete = true;
           },
         }),
       )
-      .get('/error', ({ backgroundTasks }) => {
+      .get('/', ({ backgroundTasks }) => {
         backgroundTasks.addTask(async () => {
-          throw new Error('Test async error handler');
+          throw new Error('Test async error');
         });
         return 'task initiated';
       });
 
-    await app.handle(get('/error'));
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('task initiated');
 
     await sleep(200);
-
     expect(capturedError).toBeInstanceOf(Error);
-    expect((capturedError as Error).message).toBe('Test async error handler');
-    expect(errorHandlerCompleted).toBe(true);
+    expect((capturedError as Error).message).toBe('Test async error');
+    expect(errorHandlerComplete).toBe(true);
   });
 
   it('should handle unknown error types', async () => {
@@ -184,29 +172,30 @@ describe('BackgroundTasks', () => {
       )
       .get('/', ({ backgroundTasks }) => {
         backgroundTasks.addTask(async () => {
-          throw new Error('String error');
+          throw new Error('Unknown error');
         });
         return 'task initiated';
       });
 
-    await app.handle(get('/'));
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('task initiated');
 
     await sleep(100);
-
     expect(capturedError).toBeInstanceOf(Error);
   });
 
   it('should not block subsequent requests when error handler takes time', async () => {
-    let asyncErrorHandlerStarted = false;
-    let asyncErrorHandlerCompleted = false;
+    let errorHandlerStarted = false;
+    let errorHandlerComplete = false;
 
     const app = new Elysia()
       .use(
         background({
           onError: async (_error) => {
-            asyncErrorHandlerStarted = true;
+            errorHandlerStarted = true;
             await sleep(5000);
-            asyncErrorHandlerCompleted = true;
+            errorHandlerComplete = true;
           },
         }),
       )
@@ -221,32 +210,34 @@ describe('BackgroundTasks', () => {
       });
 
     const firstResponse = await app.handle(get('/slow'));
+    expect(firstResponse.status).toBe(200);
     expect(await firstResponse.text()).toBe('slow task initiated');
-    await sleep(50);
-    expect(asyncErrorHandlerStarted).toBe(true);
-    expect(asyncErrorHandlerCompleted).toBe(false);
 
-    // make sure second request completes quickly
+    await sleep(50);
+    expect(errorHandlerStarted).toBe(true);
+    expect(errorHandlerComplete).toBe(false);
+
     const startTime = Date.now();
     const secondResponse = await app.handle(get('/quick'));
     const requestTime = Date.now() - startTime;
 
+    expect(secondResponse.status).toBe(200);
     expect(await secondResponse.text()).toBe('quick response');
     expect(requestTime).toBeLessThan(100);
-    expect(asyncErrorHandlerCompleted).toBe(false);
+    expect(errorHandlerComplete).toBe(false);
   });
 
   it('should not block subsequent requests when task takes time', async () => {
-    let longTaskStarted = false;
-    let longTaskCompleted = false;
+    let taskStarted = false;
+    let taskComplete = false;
 
     const app = new Elysia()
       .use(background())
       .get('/slow', ({ backgroundTasks }) => {
         backgroundTasks.addTask(async () => {
-          longTaskStarted = true;
+          taskStarted = true;
           await sleep(5000);
-          longTaskCompleted = true;
+          taskComplete = true;
         });
         return 'slow task initiated';
       })
@@ -255,18 +246,20 @@ describe('BackgroundTasks', () => {
       });
 
     const firstResponse = await app.handle(get('/slow'));
+    expect(firstResponse.status).toBe(200);
     expect(await firstResponse.text()).toBe('slow task initiated');
-    await sleep(50);
-    expect(longTaskStarted).toBe(true);
-    expect(longTaskCompleted).toBe(false);
 
-    // make sure second request completes quickly
+    await sleep(50);
+    expect(taskStarted).toBe(true);
+    expect(taskComplete).toBe(false);
+
     const startTime = Date.now();
     const secondResponse = await app.handle(get('/quick'));
     const requestTime = Date.now() - startTime;
 
+    expect(secondResponse.status).toBe(200);
     expect(await secondResponse.text()).toBe('quick response');
     expect(requestTime).toBeLessThan(100);
-    expect(longTaskCompleted).toBe(false);
+    expect(taskComplete).toBe(false);
   });
 });

@@ -17,14 +17,16 @@ bun add elysia-background
 import { Elysia } from "elysia";
 import { background } from "elysia-background";
 
+async function sendConfirmationEmail(email: string, code: string) {
+  console.log(`Sending confirmation email to ${email} with code ${code}`);
+}
+
 const app = new Elysia()
   .use(background())
   .post("/sign-up", ({ backgroundTasks, body }) => {
     // Do some processing
 
-    backgroundTasks.addTask(async () => {
-      await sendConfirmationEmail(body.email);
-    });
+    backgroundTasks.addTask(sendConfirmationEmail, body.email, "123456");
 
     // Response sent immediately, tasks run in background
     return { message: "Registration successful!" };
@@ -51,11 +53,11 @@ const app = new Elysia()
       },
     })
   )
-  .post("/users", ({ backgroundTasks, body }) => {
+  .get("/test", ({ backgroundTasks }) => {
     backgroundTasks.addTask(async () => {
-      await sendWelcomeEmail(body.email);
+      throw new Error("Simulated task failure");
     });
-    return { message: "User created" };
+    return { message: "Task added" };
   });
 ```
 

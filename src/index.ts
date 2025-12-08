@@ -198,17 +198,12 @@ export class BackgroundTasks implements IBackgroundTask {
    * @throws Error if any task fails
    */
   public async run(): Promise<void> {
-    try {
-      for (const task of this.tasks) {
-        try {
-          await task.run();
-        } catch (error) {
-          throw new BackgroundTaskError(error, task);
-        }
+    for (const task of this.tasks) {
+      try {
+        await task.run();
+      } catch (error) {
+        throw new BackgroundTaskError(error, task);
       }
-    } finally {
-      // Clear tasks array to prevent memory leaks and avoid re-execution of completed tasks
-      this.tasks = [];
     }
   }
 }

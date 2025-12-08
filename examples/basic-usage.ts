@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia';
+
 import { background } from '../src/index';
 
 async function sendEmail(email: string, message: string): Promise<void> {

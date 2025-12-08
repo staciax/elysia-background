@@ -45,8 +45,7 @@
     "build": "bun --bun tsdown",
     "test": "bun test",
     "lint": "biome check . && biome format .",
-    "format": "biome check --write . && biome format . --write",
-    "release": "bun run build && changeset publish"
+    "format": "biome check --write . && biome format . --write"
   },
   "devDependencies": {
     "@biomejs/biome": "~2.3.8",

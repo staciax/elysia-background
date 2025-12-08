@@ -7,7 +7,7 @@
 
 [ci-badge]: https://github.com/staciax/elysia-background/actions/workflows/ci.yml/badge.svg
 [ci-url]: https://github.com/staciax/elysia-background/actions/workflows/ci.yml
-[npm-badge]: https://badgen.net/npm/v/elysia-background?icon=npm&color=aab3ff&label=elysia-background
+[npm-badge]: https://badgen.net/npm/v/elysia-background?icon=npm&color=8e88ff&label=elysia-background
 [npm-url]: https://www.npmjs.com/package/elysia-background/v/latest
 
 A background task processing plugin for Elysia.js that executes async tasks after sending HTTP responses. Inspired by [Starlette's background tasks](https://www.starlette.io/background/).

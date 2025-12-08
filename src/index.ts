@@ -163,7 +163,7 @@ export class BackgroundTask<P extends any[]> implements IBackgroundTask {
 export class BackgroundTasks implements IBackgroundTask {
   /** Array of background tasks */
   // biome-ignore lint/suspicious/noExplicitAny:Allow adding tasks with any arguments
-  private _tasks: BackgroundTask<any[]>[];
+  private tasks: BackgroundTask<any[]>[];
 
   /**
    * Creates a new BackgroundTasks instance.
@@ -174,15 +174,7 @@ export class BackgroundTasks implements IBackgroundTask {
     // biome-ignore lint/suspicious/noExplicitAny: Allow adding tasks with any arguments
     tasks: BackgroundTask<any[]>[] = [],
   ) {
-    this._tasks = tasks;
-  }
-
-  /**
-   * Gets the list of pending background tasks.
-   */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic task type
-  public get tasks(): BackgroundTask<any[]>[] {
-    return this._tasks;
+    this.tasks = tasks;
   }
 
   /**
@@ -195,7 +187,7 @@ export class BackgroundTasks implements IBackgroundTask {
   // biome-ignore lint/suspicious/noExplicitAny: Allow adding tasks with any arguments
   public addTask<P extends any[]>(func: TaskFunction<P>, ...args: P): void {
     const task = new BackgroundTask(func, ...args);
-    this._tasks.push(task);
+    this.tasks.push(task);
   }
 
   /**
@@ -207,7 +199,7 @@ export class BackgroundTasks implements IBackgroundTask {
    */
   public async run(): Promise<void> {
     try {
-      for (const task of this._tasks) {
+      for (const task of this.tasks) {
         try {
           await task.run();
         } catch (error) {
@@ -216,7 +208,7 @@ export class BackgroundTasks implements IBackgroundTask {
       }
     } finally {
       // Clear tasks array to prevent memory leaks and avoid re-execution of completed tasks
-      this._tasks = [];
+      this.tasks = [];
     }
   }
 }

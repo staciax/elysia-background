@@ -320,10 +320,8 @@ describe('BackgroundTasks', () => {
     await sleep(100);
     expect(taskCounter).toBe(1);
 
-    // verify tasks array is empty
     expect(capturedTasksInstance).toBeDefined();
 
-    // accessing private 'tasks' property for testing
     expect((capturedTasksInstance as BackgroundTasks).tasks).toEqual([]);
 
     // attempt to run again manually - should do nothing as tasks are cleared

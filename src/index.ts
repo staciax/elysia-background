@@ -5,6 +5,7 @@
  */
 
 import { Elysia } from 'elysia';
+// import { isAsync } from 'elysia/compose';
 
 /**
  * Interface for background tasks that can be executed asynchronously.
@@ -17,6 +18,20 @@ export interface IBackgroundTask {
    * @throws Error if task execution fails
    */
   run(): Promise<void>;
+}
+
+/**
+ * Custom error class to wrap task execution errors with task details.
+ */
+export class BackgroundTaskError extends Error {
+  constructor(
+    public readonly error: unknown,
+    // biome-ignore lint/suspicious/noExplicitAny: Generic task type
+    public readonly task: BackgroundTask<any[]>,
+  ) {
+    super('Background task failed');
+    this.name = 'BackgroundTaskError';
+  }
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: Allow adding function with any arguments
@@ -50,7 +65,11 @@ export type BackgroundOptions = {
    * @param error - The error from the failed task
    * @returns void or Promise<void>
    */
-  onError?: (error: unknown) => void | Promise<void>;
+  onError?: (
+    error: unknown,
+    // biome-ignore lint/suspicious/noExplicitAny: Generic task type
+    task?: BackgroundTask<any[]>,
+  ) => void | Promise<void>;
 };
 
 /**
@@ -178,7 +197,11 @@ export class BackgroundTasks implements IBackgroundTask {
    */
   async run(): Promise<void> {
     for (const task of this.tasks) {
-      await task.run();
+      try {
+        await task.run();
+      } catch (error) {
+        throw new BackgroundTaskError(error, task);
+      }
     }
   }
 }
@@ -231,9 +254,15 @@ export function background(options?: BackgroundOptions) {
         if (options?.onError) {
           // Don't await - let user handle sync/async as needed
           // If error handler throws, it becomes unhandled rejection
-          options.onError(error);
+          if (error instanceof BackgroundTaskError) {
+            options.onError(error.error, error.task);
+          } else {
+            options.onError(error);
+          }
         } else {
-          console.error('[elysia-background] Task failed:', error);
+          const actualError =
+            error instanceof BackgroundTaskError ? error.error : error;
+          console.error('[elysia-background] Task failed:', actualError);
         }
       });
     })

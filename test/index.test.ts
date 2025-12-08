@@ -262,4 +262,38 @@ describe('BackgroundTasks', () => {
     expect(requestTime).toBeLessThan(100);
     expect(taskComplete).toBe(false);
   });
+
+  it('should provide task details in onError', async () => {
+    let capturedError: unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: generic task
+    let capturedTask: any;
+
+    const brokenTask = async (_id: number, _data: object) => {
+      throw new Error('Task failed purposefully');
+    };
+
+    const app = new Elysia()
+      .use(
+        background({
+          onError: (error, task) => {
+            capturedError = error;
+            capturedTask = task;
+          },
+        }),
+      )
+      .get('/', ({ backgroundTasks }) => {
+        backgroundTasks.addTask(brokenTask, 123, { foo: 'bar' });
+        return 'task initiated';
+      });
+
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+
+    await sleep(100);
+
+    expect(capturedError).toBeInstanceOf(Error);
+    expect((capturedError as Error).message).toBe('Task failed purposefully');
+    expect(capturedTask).toBeDefined();
+    expect(capturedTask.args).toEqual([123, { foo: 'bar' }]);
+  });
 });

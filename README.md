@@ -47,17 +47,21 @@ Errors are logged to console with `[elysia-background] Task failed:` prefix.
 const app = new Elysia()
   .use(
     background({
-      onError: (error) => {
-        console.error("Task failed:", error);
-        // You can send to monitoring service, etc.
+      onError: (error, task) => {
+        console.error('Task failed:', error);
+
+        // Access task details if needed
+        if (task) {
+          console.log('Failed task args:', task.args);
+        }
       },
-    })
+    }),
   )
-  .get("/test", ({ backgroundTasks }) => {
-    backgroundTasks.addTask(async () => {
-      throw new Error("Simulated task failure");
-    });
-    return { message: "Task added" };
+  .get('/test', ({ backgroundTasks }) => {
+    backgroundTasks.addTask(async (_id) => {
+      throw new Error('Simulated task failure');
+    }, 123);
+    return { message: 'Task added' };
   });
 ```
 

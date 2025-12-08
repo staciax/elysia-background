@@ -22,6 +22,8 @@ export interface IBackgroundTask {
 
 /**
  * Custom error class to wrap task execution errors with task details.
+ * @property error - The original error that was thrown
+ * @property task - The BackgroundTask instance that failed
  */
 export class BackgroundTaskError extends Error {
   constructor(
@@ -63,6 +65,7 @@ export type BackgroundOptions = {
   /**
    * Error handler for failed background tasks. Defaults to console logging if not provided.
    * @param error - The error from the failed task
+   * @param task - The BackgroundTask instance that failed (if available)
    * @returns void or Promise<void>
    */
   onError?: (

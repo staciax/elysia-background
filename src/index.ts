@@ -207,7 +207,7 @@ export class BackgroundTasks implements IBackgroundTask {
         }
       }
     } finally {
-      // clear the tasks array
+      // Clear tasks array to prevent memory leaks and avoid re-execution of completed tasks
       this.tasks = [];
     }
   }

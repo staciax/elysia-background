@@ -16,7 +16,13 @@
     "url": "git+https://github.com/staciax/elysia-background.git"
   },
   "license": "MIT",
-  "keywords": ["elysia", "background", "task", "typescript", "bun"],
+  "keywords": [
+    "elysia",
+    "background",
+    "task",
+    "typescript",
+    "bun"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,7 +34,11 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "scripts": {
     "dev": "bun --bun tsdown --watch",

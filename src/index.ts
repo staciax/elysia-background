@@ -163,7 +163,7 @@ export class BackgroundTask<P extends any[]> implements IBackgroundTask {
 export class BackgroundTasks implements IBackgroundTask {
   /** Array of background tasks */
   // biome-ignore lint/suspicious/noExplicitAny:Allow adding tasks with any arguments
-  private tasks: BackgroundTask<any[]>[];
+  private _tasks: BackgroundTask<any[]>[];
 
   /**
    * Creates a new BackgroundTasks instance.
@@ -174,7 +174,15 @@ export class BackgroundTasks implements IBackgroundTask {
     // biome-ignore lint/suspicious/noExplicitAny: Allow adding tasks with any arguments
     tasks: BackgroundTask<any[]>[] = [],
   ) {
-    this.tasks = tasks;
+    this._tasks = tasks;
+  }
+
+  /**
+   * Gets the list of pending background tasks.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic task type
+  public get tasks(): BackgroundTask<any[]>[] {
+    return this._tasks;
   }
 
   /**
@@ -185,9 +193,9 @@ export class BackgroundTasks implements IBackgroundTask {
    * @param args - Arguments to pass to the function
    */
   // biome-ignore lint/suspicious/noExplicitAny: Allow adding tasks with any arguments
-  addTask<P extends any[]>(func: TaskFunction<P>, ...args: P): void {
+  public addTask<P extends any[]>(func: TaskFunction<P>, ...args: P): void {
     const task = new BackgroundTask(func, ...args);
-    this.tasks.push(task);
+    this._tasks.push(task);
   }
 
   /**
@@ -197,9 +205,9 @@ export class BackgroundTasks implements IBackgroundTask {
    * @returns Promise that resolves when all tasks complete
    * @throws Error if any task fails
    */
-  async run(): Promise<void> {
+  public async run(): Promise<void> {
     try {
-      for (const task of this.tasks) {
+      for (const task of this._tasks) {
         try {
           await task.run();
         } catch (error) {
@@ -208,7 +216,7 @@ export class BackgroundTasks implements IBackgroundTask {
       }
     } finally {
       // Clear tasks array to prevent memory leaks and avoid re-execution of completed tasks
-      this.tasks = [];
+      this._tasks = [];
     }
   }
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 
 import { Elysia } from 'elysia';
 
-import { background } from '../src/index';
+import { type BackgroundTasks, background } from '../src/index';
 import { get, sleep } from './utils';
 
 describe('BackgroundTasks', () => {
@@ -295,5 +295,39 @@ describe('BackgroundTasks', () => {
     expect((capturedError as Error).message).toBe('Task failed purposefully');
     expect(capturedTask).toBeDefined();
     expect(capturedTask.args).toEqual([123, { foo: 'bar' }]);
+  });
+
+  it('should clear tasks after execution to prevent re-execution', async () => {
+    let taskCounter = 0;
+    let capturedTasksInstance: BackgroundTasks | undefined;
+
+    const increment = async () => {
+      taskCounter += 1;
+    };
+
+    const app = new Elysia()
+      .use(background())
+      .get('/', ({ backgroundTasks }) => {
+        capturedTasksInstance = backgroundTasks;
+        backgroundTasks.addTask(increment);
+        return 'task initiated';
+      });
+
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('task initiated');
+
+    await sleep(100);
+    expect(taskCounter).toBe(1);
+
+    // verify tasks array is empty
+    expect(capturedTasksInstance).toBeDefined();
+
+    // accessing private 'tasks' property for testing
+    expect((capturedTasksInstance as BackgroundTasks).tasks).toEqual([]);
+
+    // attempt to run again manually - should do nothing as tasks are cleared
+    await (capturedTasksInstance as BackgroundTasks).run();
+    expect(taskCounter).toBe(1);
   });
 });

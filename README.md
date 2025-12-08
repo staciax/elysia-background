@@ -1,9 +1,16 @@
+
+
 # Elysia Background
 
-A background task processing plugin for Elysia.js that executes async tasks after sending HTTP responses. Inspired by [Starlette's background tasks](https://www.starlette.io/background/).
+[![CI on main][ci-badge]][ci-url]
+[![npm version][npm-badge]][npm-url]
 
-> [!IMPORTANT]  
-> Currently only supports async functions. Synchronous functions are not supported at this time.
+[ci-badge]: https://github.com/staciax/elysia-background/actions/workflows/ci.yml/badge.svg
+[ci-url]: https://github.com/staciax/elysia-background/actions/workflows/ci.yml
+[npm-badge]: https://badgen.net/npm/v/elysia-background?icon=npm&color=aab3ff&label=elysia-background
+[npm-url]: https://www.npmjs.com/package/elysia-background/v/latest
+
+A background task processing plugin for Elysia.js that executes async tasks after sending HTTP responses. Inspired by [Starlette's background tasks](https://www.starlette.io/background/).
 
 ## Installation
 
@@ -12,6 +19,8 @@ bun add elysia-background
 ```
 
 ## Quick Start
+> [!IMPORTANT]  
+> Currently only supports async functions. Synchronous functions are not supported at this time.
 
 ```typescript
 import { Elysia } from "elysia";
@@ -47,17 +56,21 @@ Errors are logged to console with `[elysia-background] Task failed:` prefix.
 const app = new Elysia()
   .use(
     background({
-      onError: (error) => {
-        console.error("Task failed:", error);
-        // You can send to monitoring service, etc.
+      onError: (error, task) => {
+        console.error('Task failed:', error);
+
+        // Access task details if needed
+        if (task) {
+          console.log('Failed task args:', task.args);
+        }
       },
-    })
+    }),
   )
-  .get("/test", ({ backgroundTasks }) => {
-    backgroundTasks.addTask(async () => {
-      throw new Error("Simulated task failure");
-    });
-    return { message: "Task added" };
+  .get('/test', ({ backgroundTasks }) => {
+    backgroundTasks.addTask(async (_id) => {
+      throw new Error('Simulated task failure');
+    }, 123);
+    return { message: 'Task added' };
   });
 ```
 

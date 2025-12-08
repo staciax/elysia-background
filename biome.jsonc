@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,15 +8,31 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "include": ["*.ts", "*.json"],
-    "ignore": ["dist"]
+    "includes": ["**", "!node_modules", "!dist"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [":BUN:", ":NODE:"],
+              ":BLANK_LINE:",
+              ":URL:",
+              ":PACKAGE:",
+              ":PACKAGE_WITH_PROTOCOL:",
+              ":BLANK_LINE:",
+              ":PATH:"
+            ]
+          }
+        }
+      }
+    }
   },
   "linter": {
     "enabled": true,
@@ -30,13 +46,13 @@
         "noUnusedImports": {
           "fix": "none",
           "level": "warn"
-        },
-        "useArrayLiterals": "error"
+        }
       },
       "style": {
         "noNamespace": "error",
         "useAsConstAssertion": "error",
-        "useThrowOnlyError": "error"
+        "useThrowOnlyError": "error",
+        "useArrayLiterals": "error"
       }
     }
   },

@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia';
+
 import { background } from '../src/index';
 
 // Note: Even though the plugin instance is shared, each request gets its own

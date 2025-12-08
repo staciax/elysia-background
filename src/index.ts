@@ -259,13 +259,21 @@ export function background(options?: BackgroundOptions) {
     .onAfterResponse(({ backgroundTasks }) => {
       backgroundTasks.run().catch(async (error) => {
         if (options?.onError) {
-          const result = options.onError(
-            error instanceof BackgroundTaskError
-              ? { error: error.error, task: error.task }
-              : { error },
-          );
-          if (result instanceof Promise) {
-            await result;
+          try {
+            const result = options.onError(
+              error instanceof BackgroundTaskError
+                ? { error: error.error, task: error.task }
+                : { error },
+            );
+            if (result instanceof Promise) {
+              await result;
+            }
+          } catch (handlerError) {
+            // If the onError handler itself fails, log that error too
+            console.error(
+              '[elysia-background] Error handler failed:',
+              handlerError,
+            );
           }
         } else {
           const actualError =

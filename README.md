@@ -56,7 +56,7 @@ Errors are logged to console with `[elysia-background] Task failed:` prefix.
 const app = new Elysia()
   .use(
     background({
-      onError: (error, task) => {
+      onError: ({ error, task }) => {
         console.error('Task failed:', error);
 
         // Access task details if needed

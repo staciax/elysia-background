@@ -64,15 +64,14 @@ type TaskFunction<P extends any[]> = (...args: P) => void | Promise<void>;
 export type BackgroundOptions = {
   /**
    * Error handler for failed background tasks. Defaults to console logging if not provided.
-   * @param error - The error from the failed task
-   * @param task - The BackgroundTask instance that failed (if available)
+   * @param event - The error event object containing error and task
    * @returns void or Promise<void>
    */
-  onError?: (
-    error: unknown,
+  onError?: (event: {
+    error: unknown;
     // biome-ignore lint/suspicious/noExplicitAny: Generic task type
-    task?: BackgroundTask<any[]>,
-  ) => void | Promise<void>;
+    task?: BackgroundTask<any[]>;
+  }) => void | Promise<void>;
 };
 
 /**
@@ -164,7 +163,7 @@ export class BackgroundTask<P extends any[]> implements IBackgroundTask {
 export class BackgroundTasks implements IBackgroundTask {
   /** Array of background tasks */
   // biome-ignore lint/suspicious/noExplicitAny:Allow adding tasks with any arguments
-  public readonly tasks: BackgroundTask<any[]>[];
+  private tasks: BackgroundTask<any[]>[];
 
   /**
    * Creates a new BackgroundTasks instance.
@@ -199,12 +198,17 @@ export class BackgroundTasks implements IBackgroundTask {
    * @throws Error if any task fails
    */
   async run(): Promise<void> {
-    for (const task of this.tasks) {
-      try {
-        await task.run();
-      } catch (error) {
-        throw new BackgroundTaskError(error, task);
+    try {
+      for (const task of this.tasks) {
+        try {
+          await task.run();
+        } catch (error) {
+          throw new BackgroundTaskError(error, task);
+        }
       }
+    } finally {
+      // clear the tasks array
+      this.tasks = [];
     }
   }
 }
@@ -231,7 +235,7 @@ export class BackgroundTasks implements IBackgroundTask {
  * // With custom error handling
  * const app = new Elysia()
  *   .use(background({
- *     onError: (error) => {
+ *     onError: ({ error }) => {
  *       console.error('Background task failed:', error);
  *       Sentry.captureException(error);
  *     }
@@ -253,14 +257,15 @@ export function background(options?: BackgroundOptions) {
       backgroundTasks: new BackgroundTasks(),
     }))
     .onAfterResponse(({ backgroundTasks }) => {
-      backgroundTasks.run().catch((error) => {
+      backgroundTasks.run().catch(async (error) => {
         if (options?.onError) {
-          // Don't await - let user handle sync/async as needed
-          // If error handler throws, it becomes unhandled rejection
-          if (error instanceof BackgroundTaskError) {
-            options.onError(error.error, error.task);
-          } else {
-            options.onError(error);
+          const result = options.onError(
+            error instanceof BackgroundTaskError
+              ? { error: error.error, task: error.task }
+              : { error },
+          );
+          if (result instanceof Promise) {
+            await result;
           }
         } else {
           const actualError =

@@ -29,7 +29,7 @@ const app = new Elysia().use(background());
 // With custom error handling
 const app = new Elysia().use(
   background({
-    onError: (error) => console.error("Task failed:", error),
+    onError: ({ error }) => console.error("Task failed:", error),
   })
 );
 ```
@@ -46,14 +46,20 @@ const app = new Elysia().use(
 
 ```typescript
 type BackgroundOptions = {
-  onError?: (error: unknown) => void | Promise<void>;
+  onError?: (event: {
+    error: unknown;
+    task?: BackgroundTask<any[]>;
+  }) => void | Promise<void>;
 };
 ```
 
 **Properties:**
 
-- **`onError`** `(error: unknown) => void | Promise<void>` _(optional)_
+- **`onError`** `(event: { error: unknown, task?: BackgroundTask<any[]> }) => void | Promise<void>` _(optional)_
   - Error handler for failed background tasks
+  - Receives an object with:
+    - `error`: The original error thrown
+    - `task`: The task instance that failed (optional)
   - Supports both synchronous and asynchronous handlers
   - **Default:** Console logging with `[elysia-background] Task failed:` prefix
 

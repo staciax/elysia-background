@@ -107,7 +107,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error) => {
+          onError: ({ error }) => {
             capturedError = error;
           },
         }),
@@ -135,7 +135,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: async (error) => {
+          onError: async ({ error }) => {
             capturedError = error;
             await sleep(100);
             errorHandlerComplete = true;
@@ -165,7 +165,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error) => {
+          onError: ({ error }) => {
             capturedError = error;
           },
         }),
@@ -192,7 +192,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: async (_error) => {
+          onError: async ({ error: _error }) => {
             errorHandlerStarted = true;
             await sleep(5000);
             errorHandlerComplete = true;
@@ -275,7 +275,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error, task) => {
+          onError: ({ error, task }) => {
             capturedError = error;
             capturedTask = task;
           },

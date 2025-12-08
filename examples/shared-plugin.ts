@@ -8,7 +8,7 @@ import { background } from '../src/index';
 // src/lib/background.ts
 
 export const bg = background({
-  onError: (error) => {
+  onError: ({ error }) => {
     console.error('[elysia-background] Task error:', error);
   },
 });

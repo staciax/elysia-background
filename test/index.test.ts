@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, spyOn } from 'bun:test';
 
 import { Elysia } from 'elysia';
 
@@ -107,7 +107,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error) => {
+          onError: ({ error }) => {
             capturedError = error;
           },
         }),
@@ -135,7 +135,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: async (error) => {
+          onError: async ({ error }) => {
             capturedError = error;
             await sleep(100);
             errorHandlerComplete = true;
@@ -165,7 +165,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error) => {
+          onError: ({ error }) => {
             capturedError = error;
           },
         }),
@@ -192,7 +192,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: async (_error) => {
+          onError: async ({ error: _error }) => {
             errorHandlerStarted = true;
             await sleep(5000);
             errorHandlerComplete = true;
@@ -275,7 +275,7 @@ describe('BackgroundTasks', () => {
     const app = new Elysia()
       .use(
         background({
-          onError: (error, task) => {
+          onError: ({ error, task }) => {
             capturedError = error;
             capturedTask = task;
           },
@@ -295,5 +295,39 @@ describe('BackgroundTasks', () => {
     expect((capturedError as Error).message).toBe('Task failed purposefully');
     expect(capturedTask).toBeDefined();
     expect(capturedTask.args).toEqual([123, { foo: 'bar' }]);
+  });
+  it('should log error when onError handler fails', async () => {
+    const consoleSpy = spyOn(console, 'error').mockImplementation(() => {});
+
+    // create an error that will be thrown by the onError handler
+    const handlerError = new Error('Error inside handler');
+
+    const app = new Elysia()
+      .use(
+        background({
+          onError: () => {
+            throw handlerError;
+          },
+        }),
+      )
+      .get('/', ({ backgroundTasks }) => {
+        backgroundTasks.addTask(async () => {
+          throw new Error('Original task error');
+        });
+        return 'task initiated';
+      });
+
+    const response = await app.handle(get('/'));
+    expect(response.status).toBe(200);
+
+    await sleep(100);
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy.mock.calls[0]).toEqual([
+      '[elysia-background] Error handler failed:',
+      handlerError,
+    ]);
+
+    consoleSpy.mockRestore();
   });
 });

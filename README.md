@@ -12,9 +12,6 @@
 
 A background task processing plugin for Elysia.js that executes async tasks after sending HTTP responses. Inspired by [Starlette's background tasks](https://www.starlette.io/background/).
 
-> [!IMPORTANT]  
-> Currently only supports async functions. Synchronous functions are not supported at this time.
-
 ## Installation
 
 ```bash
@@ -22,6 +19,8 @@ bun add elysia-background
 ```
 
 ## Quick Start
+> [!IMPORTANT]  
+> Currently only supports async functions. Synchronous functions are not supported at this time.
 
 ```typescript
 import { Elysia } from "elysia";

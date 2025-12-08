@@ -1,6 +1,6 @@
 {
   "name": "elysia-background",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A background task processing plugin for Elysia.js",
   "author": {
     "name": "STACiA",

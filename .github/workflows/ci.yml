@@ -27,7 +27,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run linter
-        run: bun biome ci
+        run: bun run lint:ci
 
       - name: Run tests
         run: bun test

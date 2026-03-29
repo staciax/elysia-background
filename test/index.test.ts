@@ -23,6 +23,8 @@ describe('BackgroundTasks', () => {
     const response = await app.handle(get('/'));
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('task initiated');
+
+    await sleep(100);
     expect(taskComplete).toBe(true);
   });
 

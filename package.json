@@ -45,6 +45,7 @@
     "build": "bun --bun rolldown -c rolldown.config.ts",
     "test": "bun test",
     "lint": "biome check . && biome format .",
+    "lint:ci": "biome ci .",
     "format": "biome check --write . && biome format . --write"
   },
   "devDependencies": {

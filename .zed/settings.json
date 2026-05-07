@@ -1,0 +1,57 @@
+{
+  "format_on_save": "on",
+  "read_only_files": ["**/node_modules/**", "bun.lock"],
+  "lsp": {
+    "biome": {
+      "binary": {
+        "path": "./node_modules/@biomejs/biome/bin/biome",
+        "arguments": ["lsp-proxy"]
+      },
+      "settings": {
+        "config_path": "./biome.json",
+        "require_config_file": true
+      }
+    }
+  },
+  "languages": {
+    "TypeScript": {
+      "language_servers": [
+        "typescript-language-server",
+        "!vtsls",
+        "!eslint",
+        "!tailwindcss-language-server",
+        "..."
+      ],
+      "formatter": [
+        { "language_server": { "name": "biome" } },
+        { "code_action": "source.fixAll.biome" },
+        { "code_action": "source.organizeImports.biome" }
+      ]
+    },
+    "JavaScript": {
+      "language_servers": [
+        "typescript-language-server",
+        "!vtsls",
+        "!eslint",
+        "!tailwindcss-language-server",
+        "..."
+      ],
+      "formatter": [
+        { "language_server": { "name": "biome" } },
+        { "code_action": "source.fixAll.biome" },
+        { "code_action": "source.organizeImports.biome" }
+      ]
+    },
+    "JSON": {
+      "language_servers": ["biome", "..."],
+      "formatter": [{ "language_server": { "name": "biome" } }]
+    },
+    "JSONC": {
+      "language_servers": ["biome", "..."],
+      "formatter": [{ "language_server": { "name": "biome" } }]
+    },
+    "Markdown": {
+      "soft_wrap": "none"
+    }
+  }
+}
